@@ -1,6 +1,5 @@
 package com.example.midtermexam
 
-import Item
 import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,10 +38,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import studentsViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlin.collections.plus
 
+
+data class Item(val id: Int, val name: String)
+
+class studentsViewModel : ViewModel() {
+    companion object {
+        // ✅ The observable state holder
+        private val _dataList = MutableStateFlow<List<Item>>(emptyList())
+
+        val dataList: StateFlow<List<Item>> = _dataList.asStateFlow()
+
+        fun addItem(newItem: Item) {
+            _dataList.update { currentList ->
+                currentList + newItem
+            }
+        }
+
+        // Another example: clearing the list
+        fun clearList() {
+            _dataList.value = emptyList()
+        }
+    }
+}
 
 object AddStudentScreenUI {
     @Composable
@@ -54,10 +80,7 @@ object AddStudentScreenUI {
     fun addStudentInit(
         modifier: Modifier,
         navController: NavHostController,
-        viewModel: studentsViewModel = viewModel()
         ) {
-        val items by viewModel.dataList.collectAsState()
-
         var studentid by remember { mutableStateOf("") }
         var studentname by remember { mutableStateOf("") }
 
@@ -147,7 +170,6 @@ object AddStudentScreenUI {
                         Button(
                             onClick = {
                                 if (!lackOfData) {
-                                    { onAddItem() }
                                     navController.navigate("dashboard_screen")
                                 }
                             },
@@ -170,15 +192,6 @@ object AddStudentScreenUI {
                         }
                     }
                 }
-            }
-        }
-        fun onAddItem() {
-            val newId = studentid.toIntOrNull()
-            if (newId != null && studentname.isNotBlank()) {
-                val newItem = Item(newId, studentname)
-                viewModel.addItem(newItem)
-                studentid = "" // Reset ID field
-                studentname = "" // Reset Name field
             }
         }
     }
